@@ -1,0 +1,19 @@
+check50:
+  files:
+    - !exclude "*"
+    - !require text_analysis.c
+
+submit50:
+  files:
+    - !exclude "*"
+    - !include "*.c"
+    - !include "*.h"
+  
+  # Require check50 to pass before allowing submission
+  error: |
+    Your code must pass check50 before you can submit.
+    Run check50 first to ensure your solution is correct.
+  
+  # Check that check50 has been run and passed
+  check:
+    - check50
