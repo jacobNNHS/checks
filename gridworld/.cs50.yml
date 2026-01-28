@@ -1,0 +1,382 @@
+checks:
+  exists:
+    - gridworld.c
+  
+  compiles:
+    - run: gcc -std=c11 -Wall -Werror -Wextra -o gridworld gridworld.c
+      exit: 0
+  
+  test_init_display:
+    - run: ./gridworld
+      stdin: |
+        display
+        quit
+      stdout: |
+        Welcome to GridWorld!
+        .*
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        .*
+      exit: 0
+  
+  test_place_single:
+    - run: ./gridworld
+      stdin: |
+        place P 5 5
+        display
+        quit
+      stdout: |
+        .*Placed P at \(5, 5\).*
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. P \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        .*
+      exit: 0
+  
+  test_place_multiple:
+    - run: ./gridworld
+      stdin: |
+        place P 2 3
+        place T 2 4
+        place R 5 5
+        place W 8 1
+        display
+        quit
+      stdout: |
+        .*
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. P T \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. R \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. W \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        .*
+      exit: 0
+  
+  test_place_out_of_bounds:
+    - run: ./gridworld
+      stdin: |
+        place P 10 5
+        place T 5 10
+        place R -1 5
+        display
+        quit
+      stdout: |
+        .*Could not place.*
+        .*Could not place.*
+        .*Could not place.*
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        .*
+      exit: 0
+  
+  test_place_occupied:
+    - run: ./gridworld
+      stdin: |
+        place P 5 5
+        place T 5 5
+        display
+        quit
+      stdout: |
+        .*Placed P at \(5, 5\).*
+        .*Could not place.*
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. P \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        .*
+      exit: 0
+  
+  test_move_right:
+    - run: ./gridworld
+      stdin: |
+        place P 5 5
+        move 5 5 right
+        display
+        quit
+      stdout: |
+        .*
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. P \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        .*
+      exit: 0
+  
+  test_move_left:
+    - run: ./gridworld
+      stdin: |
+        place P 5 5
+        move 5 5 left
+        display
+        quit
+      stdout: |
+        .*
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. P \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        .*
+      exit: 0
+  
+  test_move_up:
+    - run: ./gridworld
+      stdin: |
+        place P 5 5
+        move 5 5 up
+        display
+        quit
+      stdout: |
+        .*
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. P \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        .*
+      exit: 0
+  
+  test_move_down:
+    - run: ./gridworld
+      stdin: |
+        place P 5 5
+        move 5 5 down
+        display
+        quit
+      stdout: |
+        .*
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. P \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        .*
+      exit: 0
+  
+  test_move_out_of_bounds:
+    - run: ./gridworld
+      stdin: |
+        place P 0 0
+        move 0 0 up
+        move 0 0 left
+        display
+        quit
+      stdout: |
+        .*Could not move.*
+        .*Could not move.*
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        .*
+      exit: 0
+  
+  test_move_collision:
+    - run: ./gridworld
+      stdin: |
+        place P 5 5
+        place T 5 6
+        move 5 5 right
+        display
+        quit
+      stdout: |
+        .*Could not move.*
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. P T \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        .*
+      exit: 0
+  
+  test_list_entities:
+    - run: ./gridworld
+      stdin: |
+        place P 2 3
+        place T 5 5
+        place R 8 1
+        list
+        quit
+      stdout: |
+        .*P at \(2, 3\).*
+        .*T at \(5, 5\).*
+        .*R at \(8, 1\).*
+      exit: 0
+  
+  test_remove:
+    - run: ./gridworld
+      stdin: |
+        place P 5 5
+        place T 5 6
+        remove 5 5
+        display
+        quit
+      stdout: |
+        .*
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. T \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        .*
+      exit: 0
+  
+  test_neighbors_none:
+    - run: ./gridworld
+      stdin: |
+        place P 5 5
+        neighbors 5 5 T
+        quit
+      stdout: |
+        .*Found 0 neighbor.*
+      exit: 0
+  
+  test_neighbors_one:
+    - run: ./gridworld
+      stdin: |
+        place W 5 5
+        place W 5 6
+        neighbors 5 5 W
+        quit
+      stdout: |
+        .*Found 1 neighbor.*
+      exit: 0
+  
+  test_neighbors_multiple:
+    - run: ./gridworld
+      stdin: |
+        place W 4 4
+        place W 4 5
+        place W 5 4
+        place W 5 5
+        neighbors 4 4 W
+        quit
+      stdout: |
+        .*Found 2 neighbor.*
+      exit: 0
+  
+  test_neighbors_all_eight:
+    - run: ./gridworld
+      stdin: |
+        place T 4 4
+        place T 4 5
+        place T 4 6
+        place T 5 4
+        place T 5 6
+        place T 6 4
+        place T 6 5
+        place T 6 6
+        neighbors 5 5 T
+        quit
+      stdout: |
+        .*Found 8 neighbor.*
+      exit: 0
+  
+  test_complex_scenario:
+    - run: ./gridworld
+      stdin: |
+        place P 0 0
+        place T 0 1
+        move 0 0 right
+        move 0 0 down
+        place R 9 9
+        move 9 9 right
+        list
+        neighbors 1 0 T
+        remove 0 1
+        list
+        display
+        quit
+      stdout: |
+        .*Could not move.*
+        .*Moved entity.*
+        .*Could not move.*
+        .*P at \(1, 0\).*
+        .*T at \(0, 1\).*
+        .*R at \(9, 9\).*
+        .*Found 1 neighbor.*
+        .*P at \(1, 0\).*
+        .*R at \(9, 9\).*
+        \. \. \. \. \. \. \. \. \. \.
+        P \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. \.
+        \. \. \. \. \. \. \. \. \. R
+        .*
+      exit: 0
