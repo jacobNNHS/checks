@@ -1,6 +1,0 @@
-check50:
-  files:
-    - !exclude "*"
-    - !require gridworld.c
-
-python: __init__.py
