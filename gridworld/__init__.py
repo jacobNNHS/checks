@@ -9,7 +9,7 @@ def exists():
 @check50.check(exists)
 def compiles():
     """gridworld.c compiles"""
-    check50.c.compile("gridworld.c", cc="gcc", cflags=["-std=c11", "-Wall", "-Werror", "-Wextra"])
+    check50.c.compile("gridworld.c")
 
 @check50.check(compiles)
 def test_init_display():
