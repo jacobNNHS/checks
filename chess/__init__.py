@@ -19,6 +19,7 @@ or point check50 at wherever you've placed this checks folder)
 """
 
 import check50
+import check50.c
 
 
 @check50.check()
