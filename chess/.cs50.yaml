@@ -1,2 +1,5 @@
-check50: jacobnnhs/checks/main/chess
-submit50: jacobnnhs/chess
+check50:
+  files:
+    - !exclude "*"
+    - !include chess.c
+  checks: __init__.py
