@@ -31,8 +31,7 @@ def exists():
 @check50.check(exists)
 def compiles():
     """chess.c compiles"""
-    check50.c.compile("chess.c", exe_name="chess")
-
+    check50.c.compile("chess.c", exe_name="chess", lcs50=True)
 
 def _run(piece, start_col, start_row, end_col, end_row):
     """Helper: run ./chess with the five inputs, in order, prompts ignored."""
