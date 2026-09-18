@@ -3,3 +3,8 @@ check50:
     - !exclude "*"
     - !include chess.c
   checks: __init__.py
+
+submit50:
+  files:
+    - !exclude "*"
+    - !include chess.c
