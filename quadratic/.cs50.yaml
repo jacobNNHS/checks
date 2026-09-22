@@ -1,0 +1,17 @@
+check50:
+  files:
+    - "!.cs50.yaml"
+    - "!checks.py"
+    - "!*.zip"
+    - "*"
+
+style50:
+  files:
+    - "quadratic.c"
+
+submit50:
+  files:
+    - "!.cs50.yaml"
+    - "!checks.py"
+    - "!*.zip"
+    - "*"
