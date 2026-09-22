@@ -1,17 +1,10 @@
 check50:
   files:
-    - "!.cs50.yaml"
-    - "!checks.py"
-    - "!*.zip"
-    - "*"
-
-style50:
-  files:
-    - "quadratic.c"
+    - !exclude "*"
+    - !include quadratic.c
+  checks: __init__.py
 
 submit50:
   files:
-    - "!.cs50.yaml"
-    - "!checks.py"
-    - "!*.zip"
-    - "*"
+    - !exclude "*"
+    - !include quadratic.c
