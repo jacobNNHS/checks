@@ -32,7 +32,7 @@ def exists():
 @check50.check(exists)
 def compiles():
     """quadratic.c compiles"""
-    check50.c.compile("quadratic.c", exe="quadratic")
+    check50.c.compile("quadratic.c", exe="quadratic", lcs50=True)
 
 
 @check50.check(compiles)
