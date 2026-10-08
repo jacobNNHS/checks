@@ -2,6 +2,7 @@ check50:
   files:
     - !exclude "*"
     - !require pin_cracker.c
+    checks: __init__.py
 
 submit50:
   files:
