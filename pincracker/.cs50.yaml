@@ -1,9 +1,9 @@
 check50:
   files:
     - !exclude "*"
-    - !include pin_cracker.c
+    - !require pin_cracker.c
 
 submit50:
   files:
     - !exclude "*"
-    - !include pin_cracker.c
+    - !require pin_cracker.c
