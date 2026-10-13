@@ -1,0 +1,8 @@
+check50:
+  files:
+    - !exclude "*"
+    - !require secret_handshake.c
+submit50:
+  files:
+    - !exclude "*"
+    - !require secret_handshake.c
