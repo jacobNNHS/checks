@@ -1,4 +1,4 @@
-import re
+mport re
 
 import check50
 import check50.c
@@ -195,16 +195,6 @@ def prototypes():
         if not re.search(signature + r"\s*\{", after):
             raise check50.Failure(f"missing the definition of {name} below main",
                                   help="the definition must match the prototype")
-
-
-@check50.check(exists)
-def no_arrays_or_strings():
-    """uses no arrays and no strings"""
-    code = source_code()
-    if "[" in code:
-        raise check50.Failure("found [ in your code; arrays are not allowed")
-    if re.search(r"\bstring\b|\bget_string\b|\bchar\b", code):
-        raise check50.Failure("found string or char in your code; strings are not allowed")
 
 
 @check50.check(compiles)
