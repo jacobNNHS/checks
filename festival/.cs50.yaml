@@ -1,1 +1,8 @@
-test
+check50:
+  files:
+    - !exclude "*"
+    - !require festival.c
+submit50:
+  files:
+    - !exclude "*"
+    - !require festival.c
