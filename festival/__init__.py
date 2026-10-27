@@ -338,24 +338,38 @@ def stage5_invalid():
         expect_voucher(run_program(voucher=voucher), "INVALID")
 
 
+REPORT_LINES = 5
+
+
 @check50.check(stage4_valid_wristbands)
 def final_report():
-    """final report summarizes the stages (the voucher part is required only if you did stage 5)"""
+    """final report shows the right values (the voucher result is required only if you did stage 5)"""
     with_stage5 = stage5_started()
     cases = [
-        (dict(), "Banner 6x4, goal met in 11 months, 47 cupcakes need 7 containers, wristband VALID",
-         "STUDENT"),
+        (dict(), [6, 4, 11, 47, 7], ["VALID", "STUDENT"]),
         (dict(width="4", height="3", start="1000", goal="2000", cupcakes="29",
               wristband="9780306406158", voucher="45210331"),
-         "Banner 4x3, goal met in 11 months, 29 cupcakes need 5 containers, wristband INVALID",
-         "INVALID"),
+         [4, 3, 11, 29, 5], ["INVALID", "INVALID"]),
     ]
-    for overrides, expected, category in cases:
+    for overrides, numbers, words in cases:
         output = run_program(**overrides)
-        match = re.search(re.escape(expected) + r"([^\n]*)", output)
-        if not match:
-            raise check50.Failure("could not find the expected summary line",
-                                  help=f"expected a line starting with:\n{expected}")
-        rest = match.group(1)
-        if with_stage5 and not re.fullmatch(rf",\s*voucher {category}\.?\s*", rest):
-            raise check50.Mismatch(f"{expected}, voucher {category}.", expected + rest)
+        lines = [line.strip() for line in output.split("\n") if line.strip()]
+        report = lines[-REPORT_LINES:]
+        # Only the values matter, not the wording or the number of lines (up to five):
+        # banner width, banner height, months, cupcakes, containers, then the
+        # wristband result and the voucher result, in that order.
+        want_words = words if with_stage5 else words[:1]
+        wanted = [str(n) for n in numbers] + want_words
+        tokens = re.findall(r"\d+|\b(?:INVALID|VALID|STUDENT|STAFF|GUEST)\b", "\n".join(report))
+        matched = 0
+        for token in tokens:
+            if matched < len(wanted) and token == wanted[matched]:
+                matched += 1
+        if matched < len(wanted):
+            raise check50.Failure(
+                "the final report is missing or has a wrong value: " + wanted[matched],
+                help="check50 reads the last %d lines your program prints and looks for these "
+                     "values in order: banner width, banner height, months, cupcakes, containers, "
+                     "wristband result%s. Expected: %s. Your last lines were:\n%s"
+                     % (REPORT_LINES, ", voucher result" if with_stage5 else "",
+                        ", ".join(wanted), "\n".join(report)))
