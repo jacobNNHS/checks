@@ -16,16 +16,21 @@ DEFAULTS = {
 }
 ORDER = ["width", "height", "start", "goal", "cupcakes", "wristband", "voucher"]
 
-# Signatures students were given for Stages 1 to 3
+# Signatures students were given for Stages 1 to 3 (parameter names are optional)
+INT = r"int(?:\s+\w+)?"
 SIGNATURES = {
-    "get_int_in_range": r"int\s+get_int_in_range\s*\(\s*int\s+\w+\s*,\s*int\s+\w+\s*\)",
-    "print_banner": r"void\s+print_banner\s*\(\s*int\s+\w+\s*,\s*int\s+\w+\s*\)",
-    "next_balance": r"int\s+next_balance\s*\(\s*int\s+\w+\s*\)",
-    "months_to_goal": r"int\s+months_to_goal\s*\(\s*int\s+\w+\s*,\s*int\s+\w+\s*\)",
-    "total_interest": r"int\s+total_interest\s*\(\s*int\s+\w+\s*,\s*int\s+\w+\s*\)",
-    "boxes": r"int\s+boxes\s*\(\s*int\s+\w+\s*,\s*int\s+\w+\s*\)",
-    "remaining": r"int\s+remaining\s*\(\s*int\s+\w+\s*,\s*int\s+\w+\s*\)",
+    "get_int_in_range": rf"int\s+get_int_in_range\s*\(\s*{INT}\s*,\s*{INT}\s*\)",
+    "print_banner": rf"void\s+print_banner\s*\(\s*{INT}\s*,\s*{INT}\s*\)",
+    "next_balance": rf"int\s+next_balance\s*\(\s*{INT}\s*\)",
+    "months_to_goal": rf"int\s+months_to_goal\s*\(\s*{INT}\s*,\s*{INT}\s*\)",
+    "total_interest": rf"int\s+total_interest\s*\(\s*{INT}\s*,\s*{INT}\s*\)",
+    "boxes": rf"int\s+boxes\s*\(\s*{INT}\s*,\s*{INT}\s*\)",
+    "remaining": rf"int\s+remaining\s*\(\s*{INT}\s*,\s*{INT}\s*\)",
 }
+
+# Flags for the "does it build at all" step: no warnings-as-errors, so a stray
+# unused variable can never block the behavior checks.
+LENIENT = dict(Wall=False, Werror=False, Wextra=False, Wshadow=False)
 
 
 # ----------------------------------------------------------------- helpers
@@ -83,15 +88,41 @@ def skip_optional():
     return True
 
 
-def expect_numbers(output, expected):
-    """expected maps a label such as 'Months' to the number printed after it."""
-    for label, want in expected.items():
-        match = re.search(rf"(?<!\d){re.escape(label)}:?\s*(-?\d+)", output)
-        if not match:
-            raise check50.Failure(f'could not find "{label}: <number>" in your output')
-        got = int(match.group(1))
-        if got != want:
-            raise check50.Mismatch(f"{label}: {want}", f"{label}: {got}")
+def expect_on_line(output, label, pattern, want):
+    """Pass if some line of the output mentions `pattern` (case-insensitive) and
+    contains the number `want`. The wording around the number, its position on
+    the line and the label's capitalization do not matter. The label itself is
+    removed first, so the 12 in "12-packs" is never mistaken for a value."""
+    first_line = None
+    for line in output.split("\n"):
+        if not re.search(pattern, line, re.I):
+            continue
+        first_line = first_line or line.strip()
+        rest = re.sub(pattern, " ", line, flags=re.I)
+        numbers = [int(n) for n in re.findall(r"(?<!\w)-?\d+(?!\w)(?!\.\d)", rest)]
+        if want in numbers:
+            return
+    if first_line is None:
+        raise check50.Failure(f'could not find a line about "{label}" in your output',
+                              help="your output was:\n" + output)
+    raise check50.Mismatch(f"{label}: {want}", first_line)
+
+
+def expect_values(output, expected):
+    """expected is a list of (label, regex that finds the label, wanted number)."""
+    for label, pattern, want in expected:
+        expect_on_line(output, label, pattern, want)
+
+
+def months_and_interest(months, interest):
+    return [("months", r"months?", months), ("interest", r"interest", interest)]
+
+
+def packs(twelve, six, three, singles):
+    return [("12-packs", r"(?<!\d)12\s*-?\s*packs?", twelve),
+            ("6-packs", r"(?<!\d)6\s*-?\s*packs?", six),
+            ("3-packs", r"(?<!\d)3\s*-?\s*packs?", three),
+            ("singles", r"singles?", singles)]
 
 
 def banner_pattern(width, height):
@@ -167,6 +198,10 @@ def expect_call(want, label, *args, stdin=()):
 
 
 # -------------------------------------------------------------- basic checks
+#
+# Structure: `builds` (warnings allowed) is the gate for every behavior check.
+# `compiles` (-Wall -Werror) is a stand-alone check that nothing depends on, so
+# a warning costs that one check only.
 
 @check50.check()
 def exists():
@@ -175,9 +210,19 @@ def exists():
 
 
 @check50.check(exists)
+def builds():
+    """festival.c builds (warnings allowed)"""
+    check50.c.compile("festival.c", lcs50=True, **LENIENT)
+
+
+@check50.check(exists)
 def compiles():
     """festival.c compiles with -Wall -Werror"""
-    check50.c.compile("festival.c", lcs50=True, Wall=True, Werror=True)
+    # Same warning flags as CS50's `make`, so check50 agrees with what students
+    # see in VS Code (unused variables, parameters and sign compares are allowed).
+    check50.c.compile("festival.c", lcs50=True, Wall=True, Werror=True, Wextra=True,
+                      Wshadow=True, Wno_sign_compare=True, Wno_unused_parameter=True,
+                      Wno_unused_variable=True)
 
 
 @check50.check(exists)
@@ -197,12 +242,12 @@ def prototypes():
                                   help="the definition must match the prototype")
 
 
-@check50.check(compiles)
+@check50.check(builds)
 def harness_builds():
     """functions can be called on their own"""
     check50.include("harness.c")
     check50.c.compile("festival.c", "harness.c", exe_name="harness",
-                      cc="clang -Dmain=student_main", lcs50=True)
+                      cc="clang -Dmain=student_main", lcs50=True, **LENIENT)
 
 
 # ------------------------------------------------------- function-level checks
@@ -244,63 +289,89 @@ def unit_stage3_functions():
 
 
 # ------------------------------------------------------------ whole-program checks
+#
+# Each calculation check types only valid inputs, so a student who skipped (or
+# got wrong) the input validation still gets credit for correct calculations.
+# Validation is tested separately, in its own check.
 
-@check50.check(compiles)
+@check50.check(builds)
 def stage1_banner():
-    """stage 1: banner width and height are validated and the banner is printed"""
-    output = run_program(width=["3", "21", "6"], height=["2", "11", "4"])
-    expect_banner(output, 6, 4)
-    for width, height in [(4, 3), (20, 10), (9, 5)]:
+    """stage 1: the banner is printed"""
+    for width, height in [(6, 4), (4, 3), (20, 10), (9, 5)]:
         output = run_program(width=str(width), height=str(height))
         expect_banner(output, width, height)
 
 
-@check50.check(compiles)
+@check50.check(builds)
+def stage1_validation():
+    """stage 1: banner width and height are validated"""
+    output = run_program(width=["3", "21", "6"], height=["2", "11", "4"])
+    expect_banner(output, 6, 4)
+
+
+@check50.check(builds)
 def stage2_fundraiser():
     """stage 2: 100 to 500 takes 11 months and earns 147 in interest"""
-    output = run_program(start=["99", "100"], goal=["100", "500"])
-    expect_numbers(output, {"Months": 11, "Interest": 147})
+    output = run_program()
+    expect_values(output, months_and_interest(11, 147))
 
 
-@check50.check(stage2_fundraiser)
+@check50.check(builds)
 def stage2_other_goals():
     """stage 2: other starting balances and goals"""
     for start, goal, months, interest in [(100, 130, 1, 5), (500, 600, 2, 52), (1000, 2000, 11, 784)]:
         output = run_program(start=str(start), goal=str(goal))
-        expect_numbers(output, {"Months": months, "Interest": interest})
+        expect_values(output, months_and_interest(months, interest))
 
 
-@check50.check(compiles)
+@check50.check(builds)
+def stage2_validation():
+    """stage 2: starting balance and goal are validated"""
+    # Clearly invalid values only (below the minimum, above MAX_BALANCE, a goal
+    # below the starting balance). Add an equal start and goal here only if the
+    # handout says exactly what should happen then.
+    output = run_program(start=["50", "1000001", "100"], goal=["50", "1000001", "500"])
+    expect_values(output, months_and_interest(11, 147))
+
+
+@check50.check(builds)
 def stage3_cupcakes():
     """stage 3: 47 cupcakes use 3, 1, 1 and 2 singles"""
-    output = run_program(cupcakes=["0", "1001", "47"])
-    expect_numbers(output, {"12-packs": 3, "6-packs": 1, "3-packs": 1, "Singles": 2})
+    output = run_program()
+    expect_values(output, packs(3, 1, 1, 2))
 
 
-@check50.check(stage3_cupcakes)
+@check50.check(builds)
 def stage3_other_counts():
     """stage 3: other numbers of cupcakes"""
     for cupcakes, big, medium, small, singles in [(1, 0, 0, 0, 1), (11, 0, 1, 1, 2), (12, 1, 0, 0, 0),
                                                   (29, 2, 0, 1, 2), (100, 8, 0, 1, 1)]:
         output = run_program(cupcakes=str(cupcakes))
-        expect_numbers(output, {"12-packs": big, "6-packs": medium, "3-packs": small, "Singles": singles})
+        expect_values(output, packs(big, medium, small, singles))
 
 
-@check50.check(compiles)
+@check50.check(builds)
+def stage3_validation():
+    """stage 3: the number of cupcakes is validated"""
+    output = run_program(cupcakes=["0", "1001", "47"])
+    expect_values(output, packs(3, 1, 1, 2))
+
+
+@check50.check(builds)
 def stage4_valid_wristbands():
     """stage 4: valid wristband codes are VALID"""
     for code in ["4006381333931", "9780306406157", "5012345678900"]:
         expect_wristband(run_program(wristband=code), True)
 
 
-@check50.check(compiles)
+@check50.check(builds)
 def stage4_invalid_wristbands():
     """stage 4: invalid wristband codes are INVALID"""
     for code in ["4006381333932", "4006381333913", "9780306406158"]:
         expect_wristband(run_program(wristband=code), False)
 
 
-@check50.check(stage4_valid_wristbands)
+@check50.check(builds)
 def stage4_reprompts():
     """stage 4: codes without exactly 13 digits (or negative) are asked for again"""
     output = run_program(wristband=["400638133393", "40063813339310", "-4006381333931", "4006381333931"])
@@ -309,7 +380,7 @@ def stage4_reprompts():
 
 # ---------------------------------------------- stage 5 (optional) and final report
 
-@check50.check(stage4_valid_wristbands)
+@check50.check(builds)
 def stage5_categories():
     """optional stage 5: STUDENT, STAFF and GUEST vouchers (passes if you have not started stage 5)"""
     if skip_optional():
@@ -319,7 +390,7 @@ def stage5_categories():
         expect_voucher(run_program(voucher=voucher), category)
 
 
-@check50.check(stage4_valid_wristbands)
+@check50.check(builds)
 def stage5_boundaries():
     """optional stage 5: category boundaries and an alternating sum of 11"""
     if skip_optional():
@@ -329,7 +400,7 @@ def stage5_boundaries():
         expect_voucher(run_program(voucher=voucher), category)
 
 
-@check50.check(stage4_valid_wristbands)
+@check50.check(builds)
 def stage5_invalid():
     """optional stage 5: bad length, bad alternating sum, zero and negative are INVALID"""
     if skip_optional():
@@ -341,7 +412,7 @@ def stage5_invalid():
 REPORT_LINES = 5
 
 
-@check50.check(stage4_valid_wristbands)
+@check50.check(builds)
 def final_report():
     """final report shows the right values (the voucher result is required only if you did stage 5)"""
     with_stage5 = stage5_started()
