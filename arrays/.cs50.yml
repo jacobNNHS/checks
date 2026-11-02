@@ -1,8 +1,9 @@
 check50:
   files:
-    - !require arrays.c
+    - !exclude "*"
+    - !include arrays.c
+  checks: __init__.py
 
-submit50:
 submit50:
   files:
     - !exclude "*"
