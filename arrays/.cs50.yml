@@ -1,0 +1,7 @@
+check50:
+  files:
+    - !require arrays.c
+
+submit50:
+  - !exclude "*"
+  - !require arrays.c
