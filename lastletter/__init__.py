@@ -1,12 +1,54 @@
 import check50
 import check50.c
 
+# Small C program that calls the student's get_last_letter() directly,
+# bypassing their main. Written to disk by the exists check below.
+HARNESS = r"""
+// Calls the student's get_last_letter() directly, bypassing their main.
+#define main student_main
+#include "last_letter.c"
+#undef main
+
+void show(char c)
+{
+    if (c == '\0')
+    {
+        printf("none\n");
+    }
+    else
+    {
+        printf("%c\n", c);
+    }
+}
+
+int main(int argc, char *argv[])
+{
+    if (argc == 2 && argv[1][0] == '1')
+    {
+        // Level 1: words made only of letters
+        show(get_last_letter("quiz"));
+        show(get_last_letter("k"));
+        show(get_last_letter("toolbox"));
+    }
+    else
+    {
+        // Level 2: non-letters and words with no letters
+        show(get_last_letter("wow!!"));
+        show(get_last_letter("R2D2"));
+        show(get_last_letter("404"));
+        show(get_last_letter(""));
+    }
+    return 0;
+}
+"""
+
 
 @check50.check()
 def exists():
     """last_letter.c exists"""
     check50.exists("last_letter.c")
-    check50.include("test_get_last_letter.c")
+    with open("test_get_last_letter.c", "w") as f:
+        f.write(HARNESS)
 
 
 @check50.check(exists)
